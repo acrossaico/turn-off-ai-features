@@ -259,6 +259,7 @@ class Test_Toaif_Plugin extends WP_UnitTestCase {
 					array(
 						'label'               => 'Example',
 						'description'         => 'Test ability.',
+						'category'            => 'site',
 						'execute_callback'    => '__return_true',
 						'permission_callback' => '__return_true',
 					)
