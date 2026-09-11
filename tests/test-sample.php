@@ -256,7 +256,10 @@ class Test_Toaif_Plugin extends WP_UnitTestCase {
 			static function () {
 				wp_register_ability_category(
 					'toaif-test',
-					array( 'label' => 'Turn Off AI Features test' )
+					array(
+						'label'       => 'Turn Off AI Features test',
+						'description' => 'Category used by the plugin test suite.',
+					)
 				);
 			}
 		);
