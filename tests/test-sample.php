@@ -252,6 +252,16 @@ class Test_Toaif_Plugin extends WP_UnitTestCase {
 		update_option( 'toaif_disable_ai', '1' );
 
 		add_action(
+			'wp_abilities_api_categories_init',
+			static function () {
+				wp_register_ability_category(
+					'toaif-test',
+					array( 'label' => 'Turn Off AI Features test' )
+				);
+			}
+		);
+
+		add_action(
 			'wp_abilities_api_init',
 			static function () {
 				wp_register_ability(
@@ -259,7 +269,7 @@ class Test_Toaif_Plugin extends WP_UnitTestCase {
 					array(
 						'label'               => 'Example',
 						'description'         => 'Test ability.',
-						'category'            => 'site',
+						'category'            => 'toaif-test',
 						'execute_callback'    => '__return_true',
 						'permission_callback' => '__return_true',
 					)
