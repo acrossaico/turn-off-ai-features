@@ -4,11 +4,11 @@ Tags:              disable-ai, turn-off, ai, wp-supports-ai, kill-switch
 Requires at least: 7.0
 Tested up to:      7.0
 Requires PHP:      7.4
-Stable tag:        1.0.0
+Stable tag:        1.1.0
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
-A simple on/off switch for all AI features in WordPress 7.0. One checkbox in Settings > General disables AI site-wide — no code or config file edits needed.
+A simple on/off switch for all AI features in WordPress 7.0. One checkbox in Settings > General disables AI site-wide, including the Abilities API and every MCP server — no code or config file edits needed.
 
 == Description ==
 
@@ -19,9 +19,17 @@ Turn Off AI Features lets you control AI functionality in WordPress without touc
 Features:
 
 * Toggle AI on or off from Settings > General — no deactivation needed.
-* WP-CLI support: wp ai disable / wp ai enable / wp ai status.
+* Unregisters every ability and closes the wp-abilities/v1 REST API.
+* Turns off every MCP server registered through the MCP Adapter, including its REST routes.
+* WP-CLI support: wp toaif disable / wp toaif enable / wp toaif status.
 * Settings link on the Plugins page for quick access.
 * Runs at priority 1000, overriding other plugins that may enable AI.
+
+The Abilities API and the MCP Adapter do not consult wp_supports_ai() or the
+WP_AI_SUPPORT constant — they have to be turned off separately, which is what the
+two sub-toggles do. Both are on by default, so checking the main box turns
+everything off in one step. Uncheck either one to keep abilities or MCP running
+while the rest of AI stays off.
 
 == Installation ==
 
@@ -52,9 +60,10 @@ Yes. The plugin registers three WP-CLI commands:
 
 = Does this affect the WP_AI_SUPPORT constant? =
 
-No. This plugin hooks into the wp_supports_ai filter at priority 1000, which runs
-after the constant is evaluated, and forces the return value to false regardless
-of the constant.
+Yes. When the option is on, the plugin defines WP_AI_SUPPORT as false at load time
+if nothing else has defined it already. It also hooks into the wp_supports_ai
+filter at priority 1000 as a fallback, so AI stays off even in environments where
+the constant was set elsewhere.
 
 = Why use this plugin if AI is already off by default without a connector? =
 
@@ -130,8 +139,32 @@ network-wide.
 
 AI features will return to their previous state — enabled if a connector is
 configured, disabled if not. The plugin's database option is preserved on
-deactivation (only removed on uninstall), so re-activating will restore your
-previous setting.
+deactivation, so re-activating will restore your previous setting. Note that the
+plugin ships no uninstall routine, so its options remain in the database after
+deletion; remove them manually with WP-CLI if you need a clean slate.
+
+= Does this turn off the Abilities API and MCP servers? =
+
+Yes, when the matching sub-toggles are on (they are by default). The Abilities API
+and the MCP Adapter are independent of wp_supports_ai(), so the plugin handles them
+separately:
+
+* Abilities: every registered ability is unregistered on wp_abilities_api_init,
+  later registrations are hidden from REST and MCP, listings are emptied, and both
+  permission checks and execution are denied.
+* MCP: the MCP Adapter's init is removed before it runs, so no server is created
+  and no transport route is registered. The mcp_adapter_init action is also
+  neutralised, MCP REST routes are stripped, and tool calls are blocked.
+
+This targets the canonical mcp-adapter plugin and anything built on it. Plugins
+that bundle their own MCP adapter copy or register MCP routes entirely on their own
+are only covered by the REST route and abilities layers.
+
+= Can I turn off AI but keep abilities or MCP working? =
+
+Yes. Uncheck "Abilities API" or "MCP Servers" under Settings > General. Both
+sub-toggles only appear while the main switch is on, and both are gated behind it —
+turning the main switch off restores everything regardless of their state.
 
 = Does this plugin have any performance impact? =
 
@@ -200,6 +233,14 @@ remove_filter call is guaranteed to take effect.
 2. The plugin entry on the Plugins page with the Settings quick-link for fast access to the AI toggle.
 
 == Changelog ==
+
+= 1.1.0 =
+* New: Unregisters every ability and closes the wp-abilities/v1 REST API when AI is turned off.
+* New: Turns off every MCP server registered through the MCP Adapter, including its REST routes, transports and tool calls.
+* New: Two sub-toggles under Settings > General — "Abilities API" and "MCP Servers" — both on by default and gated behind the main switch.
+* New: wp toaif disable / enable accept --abilities and --mcp flags; wp toaif status reports both plus a live ability count.
+* Fixed: Documented the correct wp toaif command namespace (the Features list previously said wp ai).
+* Fixed: Corrected the FAQ answers about the WP_AI_SUPPORT constant and about uninstall behaviour.
 
 = 1.0.0 =
 * Added: FAQ documenting all plugin-specific filters applied when AI is disabled (jetpack_ai_enabled, wpforms_disable_ai_features, wp_supports_ai)

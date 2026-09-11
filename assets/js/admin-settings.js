@@ -1,16 +1,38 @@
 ( function () {
 	var main = document.getElementById( 'toaif_disable_ai' );
-	var sub  = document.getElementById( 'toaif_hide_connectors' );
-	if ( ! main || ! sub ) {
+	if ( ! main ) {
 		return;
 	}
-	var row = sub.closest( 'tr' );
-	if ( ! row ) {
+
+	var subOptions = [
+		'toaif_disable_abilities',
+		'toaif_disable_mcp',
+		'toaif_hide_connectors'
+	];
+
+	var rows = [];
+
+	subOptions.forEach( function ( id ) {
+		var field = document.getElementById( id );
+		if ( ! field ) {
+			return;
+		}
+		var row = field.closest( 'tr' );
+		if ( row ) {
+			rows.push( row );
+		}
+	} );
+
+	if ( ! rows.length ) {
 		return;
 	}
+
 	var update = function () {
-		row.style.display = main.checked ? '' : 'none';
+		rows.forEach( function ( row ) {
+			row.style.display = main.checked ? '' : 'none';
+		} );
 	};
+
 	main.addEventListener( 'change', update );
 	update();
 } )();
